@@ -1,27 +1,29 @@
-# using windows server core image
+# using my windows server core image
 FROM dbafromthecold/windowsservercore:v1
 
 # create directory to hold iso
 RUN powershell -Command (mkdir C:\SQL2014)
 
 # copy media into container
-COPY sql_server_2014_dev_sp1 C:\SQL2014
-
-# copy start.ps1 into container
-COPY start.ps1 /
-WORKDIR /
+COPY sql_server_2014_dev_sp2 C:\SQL2014
 
 # install SQL Server
-RUN C:\SQL2014\setup.exe /q /ACTION=Install /FEATURES=SQLENGINE /INSTANCENAME=MSSQLSERVER /SECURITYMODE=SQL /SAPWD=Testing11@@ /SQLSVCACCOUNT="NT AUTHORITY\System" /SQLSYSADMINACCOUNTS="BUILTIN\Administrators" /TCPENABLED=1 /IACCEPTSQLSERVERLICENSETERMS
+RUN C:\SQL2014\setup.exe /q /ACTION=Install /FEATURES=SQLENGINE /INSTANCENAME=MSSQLSERVER /SECURITYMODE=SQL /SAPWD=Testing1122 /SQLSVCACCOUNT="NT AUTHORITY\System" /SQLSYSADMINACCOUNTS="BUILTIN\Administrators" /TCPENABLED=1 /IACCEPTSQLSERVERLICENSETERMS
 
 # remove installation media
 RUN powershell -Command (rm C:\SQL2014 -recurse)
 
-# stop sqlserver
-CMD ["net stop MSSQLSERVER"]
+# make sure service is set to automatic
+RUN powershell -Command (set-service MSSQLSERVER -StartupType Automatic)
 
-# perform healthcheck
-HEALTHCHECK CMD [ "sqlcmd", "-Q", "select 1" ]
+# switch shell to powershell
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+COPY start.ps1 /
+WORKDIR /
+
+ENV SA_PASSWORD _
+ENV ACCEPT_EULA _
 
 # run start.ps1
-RUN powershell -Command (.\start -sa_password Testing1122 -ACCEPT_EULA Y -Verbose)
+CMD .\start -sa_password $env:SA_PASSWORD -ACCEPT_EULA $env:ACCEPT_EULA -Verbose
