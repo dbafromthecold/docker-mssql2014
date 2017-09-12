@@ -1,6 +1,8 @@
 # using my windows server core image
 FROM dbafromthecold/windowsservercore:v1
 
+LABEL maintainer "Andrew Pruski"
+
 # create directory to hold iso
 RUN powershell -Command (mkdir C:\SQL2014)
 
